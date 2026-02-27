@@ -14,6 +14,7 @@ class Pokemon extends Model
         'altura',
         'peso',
         'sprite',
+        'id_externo',
         'ativo',
     ];
 
@@ -22,6 +23,7 @@ class Pokemon extends Model
         return [
             'altura' => 'integer',
             'peso' => 'decimal:2',
+            'id_externo' => 'integer',
             'ativo' => 'boolean',
         ];
     }

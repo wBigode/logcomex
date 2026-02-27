@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\PokemonController;
+use App\Http\Controllers\PokemonSyncJobController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -25,6 +26,10 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::resource('pokemon', PokemonController::class)->except(['show']);
+
+    Route::get('/pokemon-sync', [PokemonSyncJobController::class, 'index'])->name('pokemon-sync.index');
+    Route::post('/pokemon-sync', [PokemonSyncJobController::class, 'store'])->name('pokemon-sync.store');
+    Route::get('/pokemon-sync/{pokemonSyncJob}/status', [PokemonSyncJobController::class, 'show'])->name('pokemon-sync.show');
 });
 
 require __DIR__.'/auth.php';

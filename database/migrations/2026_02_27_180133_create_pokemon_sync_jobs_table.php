@@ -11,16 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('pokemon', function (Blueprint $table) {
+        Schema::create('pokemon_sync_jobs', function (Blueprint $table) {
             $table->id();
-            $table->string('nome');
-            $table->string('tipo');
-            $table->integer('altura');
-            $table->decimal('peso', 8, 2);
-            $table->string('sprite', 255);
-            $table->integer('id_externo')->nullable();
-            $table->timestampsTz();
+            $table->string('status', 50);
+            $table->integer('total_pokemon_imported')->nullable(false)->default(0);
+            $table->timestampTz('started_at')->nullable();
+            $table->timestampTz('finished_at')->nullable();
             $table->tinyInteger('ativo');
+            $table->timestampsTz();
         });
     }
 
@@ -29,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('pokemon');
+        Schema::dropIfExists('pokemon_sync_jobs');
     }
 };
