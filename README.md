@@ -1,59 +1,214 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Logcomex - Pokédex
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Sistema de gerenciamento de Pokémon com sincronização assíncrona via PokeAPI.
 
-## About Laravel
+## Stack
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- **Backend:** PHP 8.4, Laravel 12, Laravel Breeze
+- **Frontend:** Vue 3 (Composition API), Inertia.js, Tailwind CSS, Vite 7
+- **Banco de dados:** MySQL 8.4
+- **Fila:** Redis (Alpine)
+- **Busca:** Meilisearch
+- **Storage:** RustFS (S3-compatível)
+- **Containerização:** Docker via Laravel Sail
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Requisitos
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- Docker e Docker Compose
+- Usuário no grupo `docker` (ou usar `sg docker -c "..."`)
 
-## Learning Laravel
+## Instalação
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+1. Clone o repositório:
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+```bash
+git clone <url-do-repositorio> logcomex
+cd logcomex
+```
 
-## Laravel Sponsors
+2. Copie o arquivo de ambiente:
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+```bash
+cp .env.example .env
+```
 
-### Premium Partners
+3. Instale as dependências e configure o projeto:
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+```bash
+docker run --rm \
+    -u "$(id -u):$(id -g)" \
+    -v "$(pwd):/var/www/html" \
+    -w /var/www/html \
+    laravelsail/php84-composer:latest \
+    composer install --ignore-platform-reqs
+```
 
-## Contributing
+4. Suba os containers:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+./vendor/bin/sail up -d
+```
 
-## Code of Conduct
+5. Gere a chave da aplicação:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+./vendor/bin/sail artisan key:generate
+```
 
-## Security Vulnerabilities
+6. Execute as migrations:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+./vendor/bin/sail artisan migrate
+```
 
-## License
+7. Instale as dependências do frontend:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+./vendor/bin/sail npm install
+```
+
+8. Inicie o servidor de desenvolvimento do Vite:
+
+```bash
+./vendor/bin/sail npm run dev
+```
+
+A aplicação estará disponível em `http://localhost`.
+
+## Filas (Queue)
+
+O sistema utiliza **Redis** como driver de filas para processar jobs assíncronos (ex: sincronização de Pokémon via PokeAPI).
+
+Para iniciar o worker de filas:
+
+```bash
+./vendor/bin/sail artisan queue:work
+```
+
+## Funcionalidades
+
+### Autenticação
+
+- Registro, login e recuperação de senha via Laravel Breeze
+- Gerenciamento de perfil (editar dados, alterar senha, excluir conta)
+
+### CRUD de Pokémon
+
+Acessível via menu **Pokémon**.
+
+- **Listagem** paginada com busca por nome e tipo
+- **Criar** novo Pokémon (nome, tipo, altura em cm, peso em kg, URL do sprite, status ativo/inativo)
+- **Editar** dados de um Pokémon existente
+- **Excluir** via soft delete (desativa o registro pela coluna `ativo`)
+
+### Sincronização com PokeAPI
+
+Acessível via menu **Pokémon Sync**.
+
+- Importa toda a base de Pokémon da [PokeAPI](https://pokeapi.co) de forma assíncrona via Job
+- Dados importados: nome, tipo primário, altura (convertida para cm), peso (convertido para kg), sprite e ID externo
+- Utiliza `updateOrCreate` pelo `id_externo` para evitar duplicatas
+- Paginação automática pela API (100 por página) com delay de 100ms entre requisições para não sobrecarregar o servidor da PokeAPI
+- **Proteção contra execuções paralelas:** apenas uma sincronização pode estar ativa por vez
+- **Acompanhamento em tempo real:** o frontend faz polling a cada 2 segundos exibindo o progresso (total de Pokémon importados)
+- **Persistência de estado:** ao navegar para outra página e voltar, o progresso da sincronização ativa é restaurado automaticamente
+- Alertas visuais: azul (em andamento), verde (concluído), vermelho (falha)
+
+## Estrutura do Projeto
+
+```
+app/
+├── Http/
+│   ├── Controllers/
+│   │   ├── PokemonController.php          # CRUD de Pokémon
+│   │   └── PokemonSyncJobController.php   # Sincronização com PokeAPI
+│   └── Requests/
+│       ├── StorePokemonRequest.php         # Validação de criação
+│       └── UpdatePokemonRequest.php        # Validação de edição
+├── Jobs/
+│   └── PokemonSyncJob.php                 # Job assíncrono de sync
+├── Models/
+│   ├── Pokemon.php                        # Model Pokémon
+│   └── PokemonSyncJob.php                 # Model de rastreamento do job
+└── Services/
+    ├── PokemonService.php                 # Regras de negócio do CRUD
+    └── PokemonSyncService.php             # Regras de negócio da sync
+
+resources/js/
+├── Pages/
+│   ├── Pokemon/
+│   │   ├── Index.vue                      # Listagem com busca
+│   │   ├── Create.vue                     # Formulário de criação
+│   │   ├── Edit.vue                       # Formulário de edição
+│   │   └── Partials/
+│   │       └── PokemonForm.vue            # Componente de formulário compartilhado
+│   └── PokemonSync/
+│       └── Index.vue                      # Painel de sincronização
+└── Layouts/
+    └── AuthenticatedLayout.vue            # Layout com navegação
+```
+
+## Arquitetura
+
+- **Service Layer:** regras de negócio isoladas em Services, controllers delegam operações
+- **FormRequests:** validação e autorização extraídas dos controllers
+- **Componentes compartilhados:** `PokemonForm.vue` reutilizado entre Create e Edit (DRY)
+- **Soft Delete:** exclusão lógica via coluna `ativo` ao invés de remoção física
+
+## Banco de Dados
+
+### Tabela `pokemon`
+
+| Coluna      | Tipo         | Descrição                              |
+|-------------|--------------|----------------------------------------|
+| id          | bigint (PK)  | Identificador interno                  |
+| nome        | varchar(255) | Nome do Pokémon                        |
+| tipo        | varchar(255) | Tipo primário                          |
+| altura      | integer      | Altura em centímetros                  |
+| peso        | decimal(8,2) | Peso em quilogramas                    |
+| sprite      | varchar(255) | URL da imagem                          |
+| id_externo  | integer null | ID da PokeAPI (nulo se criado via CRUD)|
+| ativo       | tinyint      | 1 = ativo, 0 = inativo                |
+| created_at  | timestampTz  | Data de criação                        |
+| updated_at  | timestampTz  | Data de atualização                    |
+
+### Tabela `pokemon_sync_jobs`
+
+| Coluna                 | Tipo         | Descrição                              |
+|------------------------|--------------|----------------------------------------|
+| id                     | bigint (PK)  | Identificador do job                   |
+| status                 | varchar(50)  | pending, processing, completed, failed |
+| total_pokemon_imported | integer      | Contador de Pokémon importados         |
+| started_at             | timestamp null | Início do processamento              |
+| finished_at            | timestamp null | Fim do processamento                 |
+| ativo                  | tinyint      | 1 = ativo, 0 = inativo                |
+| created_at             | timestampTz  | Data de criação                        |
+| updated_at             | timestampTz  | Data de atualização                    |
+
+## Scripts Úteis
+
+```bash
+# Subir os containers
+./vendor/bin/sail up -d
+
+# Parar os containers
+./vendor/bin/sail down
+
+# Executar migrations
+./vendor/bin/sail artisan migrate
+
+# Rollback das migrations
+./vendor/bin/sail artisan migrate:rollback
+
+# Recriar todas as tabelas
+./vendor/bin/sail artisan migrate:fresh
+
+# Worker de filas
+./vendor/bin/sail artisan queue:work
+
+# Build de produção do frontend
+./vendor/bin/sail npm run build
+
+# Limpar caches
+./vendor/bin/sail artisan optimize:clear
+```
