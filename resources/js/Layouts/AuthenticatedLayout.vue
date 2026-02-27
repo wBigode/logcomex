@@ -39,6 +39,12 @@ const showingNavigationDropdown = ref(false);
                                 >
                                     Dashboard
                                 </NavLink>
+                                <NavLink
+                                    :href="route('pokemon.index')"
+                                    :active="route().current('pokemon.*')"
+                                >
+                                    Pokémon
+                                </NavLink>
                             </div>
                         </div>
 
@@ -145,6 +151,12 @@ const showingNavigationDropdown = ref(false);
                             :active="route().current('dashboard')"
                         >
                             Dashboard
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            :href="route('pokemon.index')"
+                            :active="route().current('pokemon.*')"
+                        >
+                            Pokémon
                         </ResponsiveNavLink>
                     </div>
 
